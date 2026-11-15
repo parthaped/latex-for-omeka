@@ -61,7 +61,8 @@ Features
 Requirements
 ------------
 
-- **Omeka S 4.** Tested with Omeka S 4.2.1 on PHP 8.3 and MariaDB 11.4.
+- **Omeka S 4.** Tested with Omeka S 4.2.1 on PHP 8.3 and MariaDB 11.4. It was tested in the default and
+  Center Row themes, alongside IIIF Server 3.6.25, Universal Viewer 3.6.10 and Metadata Browse 1.6.1.
 - **JavaScript** in the visitor's browser, to draw the tables and math.
 - **KaTeX 0.16.** It is loaded from the jsDelivr CDN by default, or from a copy in the module (see
   [Configuration](#configuration)).
@@ -167,7 +168,8 @@ How it works
 1. **On the server.** `Module.php` listens to Omeka's `rep.value.html` event. When a literal value holds a
    LaTeX block, the module wraps Omeka's normal HTML for it in an element carrying the raw text, and adds
    the stylesheet, KaTeX and the renderer to the page. Values without LaTeX are left alone and load
-   nothing.
+   nothing. This happens only on site and admin pages. IIIF manifests (for example from IIIF Server) and
+   other outputs keep Omeka's own HTML, so they carry the transcription as plain text.
 2. **In the browser.** `asset/js/latex-for-omeka.js` reads the raw text and builds the tables, lists and
    paragraphs. It hands the math to KaTeX, which cannot draw `tabular` itself.
 

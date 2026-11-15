@@ -102,6 +102,50 @@ test('booktabs body rows follow the header', () => {
   assert.match(html(booktabs), /<\/thead><tbody><tr class="lfo-rt-single"><td class="lfo-l">Paper<\/td>/);
 });
 
+// Regression from the edisondigital look-alike: E2021AAB's balance sheet put its ten asset rows in a bold header.
+test('a ledger whose only \\midrule sits above its total has no header', () => {
+  const t = '\\begin{tabular}{lr}\\toprule Cash & 1 \\\\ Notes & 2 \\\\ Stock & 3 \\\\ Plant & 4 \\\\ \\midrule Total & 10 \\\\ \\bottomrule\\end{tabular}';
+  assert.doesNotMatch(html(t), /<thead>/);
+});
+
+test('a booktabs header remains a header with only one data row', () => {
+  const t = String.raw`\begin{tabular}{lr}\toprule Name & Value \\ \midrule Cash & 1 \\ \bottomrule\end{tabular}`;
+  assert.match(html(t), /<thead>.*<th class="lfo-l" scope="col">Name<\/th>/);
+  assert.match(html(t), /<\/thead><tbody>.*<td class="lfo-l">Cash<\/td>/);
+});
+
+test('a multirow booktabs header can be longer than the body', () => {
+  const t = String.raw`\begin{tabular}{lr}\toprule Group & Results \\ Name & Value \\ Units & Dollars \\ Period & Annual \\ \midrule Cash & 1 \\ \bottomrule\end{tabular}`;
+  const result = html(t);
+  assert.equal((result.split('</thead>')[0].match(/<tr/g) || []).length, 4);
+  assert.match(result, /<\/thead><tbody>.*<td class="lfo-l">Cash<\/td>/);
+});
+
+test('a short ledger with a formatted final total has no invented header', () => {
+  const t = String.raw`\begin{tabular}{lr}\toprule Cash & 1 \\ \midrule \textbf{Grand total:} & 1 \\ \bottomrule\end{tabular}`;
+  assert.doesNotMatch(html(t), /<thead>/);
+  assert.match(html(t), /<td class="lfo-l"><b>Grand total:<\/b><\/td>/);
+});
+
+test('a summary table keeps its column headers above a final total', () => {
+  const t = String.raw`\begin{tabular}{lr}\toprule Category & Amount \\ \midrule Total & 10 \\ \bottomrule\end{tabular}`;
+  const result = html(t);
+  assert.match(result, /<thead>.*<th class="lfo-l" scope="col">Category<\/th><th class="lfo-r" scope="col">Amount<\/th>/);
+  assert.match(result, /<\/thead><tbody>.*<td class="lfo-l">Total<\/td>/);
+});
+
+test('multirow headings above a final total stay headers', () => {
+  const t = String.raw`\begin{tabular}{lr}\toprule Category & Amount \\ Period & Annual \\ \midrule \textbf{Grand total} & 10 \\ \bottomrule\end{tabular}`;
+  const result = html(t);
+  assert.equal((result.split('</thead>')[0].match(/<th /g) || []).length, 4);
+  assert.match(result, /<\/thead><tbody>.*<td class="lfo-l"><b>Grand total<\/b><\/td>/);
+});
+
+test('currency amounts above a final total remain ledger data', () => {
+  const t = String.raw`\begin{tabular}{lr}\toprule Cash & \$1,200.50 \\ Notes & \pounds 30 \\ \midrule Total & 1230.50 \\ \bottomrule\end{tabular}`;
+  assert.doesNotMatch(html(t), /<thead>/);
+});
+
 test('a table without booktabs rules has no invented header', () => {
   assert.doesNotMatch(html(ledger), /<thead>/);
 });

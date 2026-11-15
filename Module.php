@@ -83,6 +83,11 @@ class Module extends AbstractModule
             }
         }
 
+        // Only a site or admin page runs the renderer; IIIF manifests and other HTML outputs keep Omeka's own HTML.
+        $status = $services->get('Omeka\Status');
+        if (!$status->isSiteRequest() && !$status->isAdminRequest()) {
+            return;
+        }
         $dollarMath = (bool) $settings->get('latexforomeka_dollar_math', false);
         if (!self::hasLatex($text, $dollarMath)) {
             return;

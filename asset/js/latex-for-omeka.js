@@ -807,11 +807,21 @@
       head = sections.firsthead || sections.head || [];
       foot = sections.lastfoot || sections.foot || [];
     } else if (rows.length && rows[0].top.some(function (r) { return r.name === 'toprule'; })) {
-      // Booktabs: the rows between \toprule and the first \midrule are the header.
+      // Booktabs: keep headers unless numeric ledger entries precede a final labelled total.
       for (var k = 1; k < rows.length; k++) {
         if (rows[k].top.some(function (r) { return r.name === 'midrule'; })) {
-          head = rows.slice(0, k);
-          bodyRows = rows.slice(k);
+          var label = rows[k].cells[0].html.replace(/<[^>]*>/g, '').trim();
+          var finalTotal = k === rows.length - 1 && /^(?:(?:grand|sub)\s*)?totals?(?:\s|:|$)/i.test(label);
+          var ledgerBeforeTotal = finalTotal && rows.slice(0, k).every(function (row) {
+            return row.cells.slice(1).some(function (cell) {
+              var amount = cell.html.replace(/<[^>]*>/g, '').trim();
+              return /^\(?[+\-−]?\s*[$£€]?\s*\d[\d,\s]*(?:\.\d+)?\)?$/.test(amount);
+            });
+          });
+          if (!ledgerBeforeTotal) {
+            head = rows.slice(0, k);
+            bodyRows = rows.slice(k);
+          }
           break;
         }
       }
