@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LaTeX for Omeka demo</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<link rel="stylesheet" href="../asset/css/latex-for-omeka.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="../asset/js/latex-for-omeka.js"></script>
+<style>
+  :root { --bg: #fbfaf7; --fg: #23211d; --muted: #6d675d; --line: #dcd6cb; --panel: #f2efe8; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #1b1a18; --fg: #ebe7df; --muted: #a39d92; --line: #3a3732; --panel: #24221f; color-scheme: dark; } }
+  body { background: var(--bg); color: var(--fg); font: 16px/1.55 Georgia, "Times New Roman", serif; margin: 0; padding: 24px 16px 64px; }
+  main { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  .lede { color: var(--muted); margin: 0 0 28px; font-family: system-ui, sans-serif; font-size: 0.92rem; }
+  section { border-top: 1px solid var(--line); padding: 20px 0; }
+  h2 { font: 600 0.8rem system-ui, sans-serif; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+  .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+  @media (max-width: 760px) { .pair { grid-template-columns: minmax(0, 1fr); } }
+  pre.source { background: var(--panel); margin: 0; padding: 12px; font-size: 0.8rem; line-height: 1.45; overflow-x: auto; white-space: pre-wrap; }
+  .value { min-width: 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>LaTeX for Omeka</h1>
+  <p class="lede">Each example is a transcription as stored in Omeka (left) and as the item page shows it with the module (right). The text is invented for the demo.</p>
+  <div id="examples"></div>
+</main>
+
+<script type="text/plain" data-title="A letter with no LaTeX: unchanged">Menlo Park, N.J.
+Jan. 4, 1880
+
+Dear Sir,
+Enclosed find check for $125.00 in payment of your bill of Dec. 20th. The lamps &amp; wire arrived in good order.
+
+Yours truly
+T. A. Edison</script>
+
+<script type="text/plain" data-title="Booktabs table with a caption">Results of the carbon tests are as follows:
+
+\begin{table}
+\centering
+\caption{Carbon filaments, October 1879}
+\begin{tabular}{lrrl}
+\toprule
+Carbon & Ohms & Hours & Remarks \\
+\midrule
+Cotton thread & 113 & 13\textonehalf & broke at clamp \\
+Paper, \textit{bristol} & 98 & 40 & \\
+Bamboo & 186 & 1\,200 & still burning \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+These will be repeated with the new pump.</script>
+
+<script type="text/plain" data-title="Ledger page: dollars and cents aligned on the point">\begin{tabular}{|l|l|r@{.}l|}
+\hline
+\multicolumn{4}{|c|}{\textsc{Menlo Park Laboratory} --- January 1880} \\
+\hline
+Jan 4 & Lamps, 12 doz. & 112 & 50 \\
+Jan 9 & Copper wire & 3 & 05 \\
+Jan 17 & Glass blower's wages & 18 & 00 \\
+\hline\hline
+\multicolumn{2}{|r|}{\textbf{Total}} & 133 & 55 \\
+\hline
+\end{tabular}</script>
+
+<script type="text/plain" data-title="Equations in a letter">The heat developed in the conductor follows Joule's law, \(H = I^2 R t\), so for the lamp in circuit:
+\[ W = \frac{E^2}{R} = \frac{110^2}{140} \approx 86.4 \text{ watts} \]
+and across the three branches
+\begin{align}
+R_{\text{total}} &= \left(\frac{1}{R_1} + \frac{1}{R_2} + \frac{1}{R_3}\right)^{-1} \\
+&= 46.\overline{6}\ \Omega
+\end{align}
+which agrees with the meter.</script>
+
+<script type="text/plain" data-title="Merged cells and partial rules">\begin{tabular}{l|cc}
+& \multicolumn{2}{c}{Pressure} \\
+\cline{2-3}
+Bulb & before & after \\
+\hline
+\multirow{2}{*}{No.\ 1} & 0.8 mm & 0.002 mm \\
+& \multicolumn{2}{c}{\emph{resealed}} \\
+No.\ 2 & 1.1 mm & --- \\
+\end{tabular}</script>
+
+<script type="text/plain" data-title="Lists">Things to be done this week:
+\begin{enumerate}
+\item Order 2 doz. \texttt{No. 6} carbons from Bergmann \& Co.
+\item Test the new dynamo:
+  \begin{itemize}
+  \item at 1\,000 rev.
+  \item at 1\,200 rev.
+  \end{itemize}
+\item[\checkmark] Pay Kruesi
+\end{enumerate}</script>
+
+<script type="text/plain" data-title="Something the module cannot draw: shown as written">\begin{tikzpicture}
+\draw (0,0) -- (2,1) node[right] {clamp};
+\end{tikzpicture}</script>
+
+<script>
+  // The same markup the module's PHP writes: the raw text in an attribute, Omeka's own HTML inside.
+  function omekaLiteral(text) {
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+      .replace(/(\r\n|\n)/g, '<br />$1');
+  }
+  var host = document.getElementById('examples');
+  document.querySelectorAll('script[data-title]').forEach(function (s) {
+    var text = s.textContent.replace(/^\n/, '').replace(/&amp;/g, '&');
+    var section = document.createElement('section');
+    var h = document.createElement('h2');
+    h.textContent = s.getAttribute('data-title');
+    var pair = document.createElement('div');
+    pair.className = 'pair';
+    var pre = document.createElement('pre');
+    pre.className = 'source';
+    pre.textContent = text;
+    var value = document.createElement('div');
+    value.className = 'value';
+    var hasLatex = /\\(?:begin\{[A-Za-z]+\*?\}|\[|\()/.test(text);
+    value.innerHTML = hasLatex
+      ? '<div class="latex-for-omeka"></div>'
+      : omekaLiteral(text);
+    if (hasLatex) {
+      value.firstChild.setAttribute('data-latex-for-omeka', text);
+      value.firstChild.innerHTML = omekaLiteral(text);
+    }
+    pair.append(pre, value);
+    section.append(h, pair);
+    host.append(section);
+  });
+</script>
+</body>
+</html>

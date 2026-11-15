@@ -1,0 +1,10 @@
+{
+  "name": "latex-for-omeka",
+  "version": "0.1.0",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "description": "Omeka S module that renders LaTeX blocks in transcriptions",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}

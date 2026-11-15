@@ -1,0 +1,102 @@
+/* LaTeX for Omeka: borders use currentColor so the tables follow whatever theme the site uses. */
+
+.latex-for-omeka .lfo-table-wrap { max-width: 100%; overflow-x: auto; margin: 0.75em 0; }
+/* Themes often stretch every table to full width; a transcribed table keeps its own width. */
+.latex-for-omeka .lfo-table { border-collapse: collapse; border-spacing: 0; font-variant-numeric: tabular-nums; margin: 0; width: auto; max-width: none; }
+.latex-for-omeka .lfo-table caption { caption-side: top; text-align: left; font-size: 0.92em; padding-bottom: 0.4em; }
+.latex-for-omeka .lfo-table td,
+.latex-for-omeka .lfo-table th {
+  border: 0;
+  padding: 0.2em 0.6em;
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+  font-weight: inherit;
+  background: none;
+}
+.latex-for-omeka .lfo-table th { font-weight: 600; }
+.latex-for-omeka .lfo-table .lfo-c { text-align: center; }
+.latex-for-omeka .lfo-table .lfo-r { text-align: right; }
+.latex-for-omeka .lfo-table .lfo-wrap { white-space: normal; min-width: 6em; }
+.latex-for-omeka .lfo-table .lfo-vm { vertical-align: middle; }
+.latex-for-omeka .lfo-table .lfo-vb { vertical-align: bottom; }
+.latex-for-omeka .lfo-table .lfo-tl { padding-left: 0; }
+.latex-for-omeka .lfo-table .lfo-tr { padding-right: 0; }
+
+/* Vertical rules from the column spec: | and || */
+.latex-for-omeka .lfo-table .lfo-bl { border-left: 1px solid currentColor; }
+.latex-for-omeka .lfo-table .lfo-bl2 { border-left: 3px double currentColor; }
+.latex-for-omeka .lfo-table .lfo-br { border-right: 1px solid currentColor; }
+.latex-for-omeka .lfo-table .lfo-br2 { border-right: 3px double currentColor; }
+
+/* Horizontal rules: \hline, \hline\hline, booktabs' heavier \toprule and \bottomrule, \cline */
+.latex-for-omeka .lfo-table tr.lfo-rt-single > * { border-top: 1px solid currentColor; }
+.latex-for-omeka .lfo-table tr.lfo-rt-double > * { border-top: 3px double currentColor; }
+.latex-for-omeka .lfo-table tr.lfo-rt-heavy > * { border-top: 2px solid currentColor; }
+.latex-for-omeka .lfo-table tr.lfo-rt-space > * { padding-top: 0.6em; }
+.latex-for-omeka .lfo-table tr.lfo-rb-single > * { border-bottom: 1px solid currentColor; }
+.latex-for-omeka .lfo-table tr.lfo-rb-double > * { border-bottom: 3px double currentColor; }
+.latex-for-omeka .lfo-table tr.lfo-rb-heavy > * { border-bottom: 2px solid currentColor; }
+.latex-for-omeka .lfo-table .lfo-ct { border-top: 1px solid currentColor; }
+.latex-for-omeka .lfo-table .lfo-cb { border-bottom: 1px solid currentColor; }
+
+/* Math: raw TeX in monospace until KaTeX typesets it, so nothing is lost without JavaScript. */
+.latex-for-omeka .lfo-math:not(.lfo-typeset) { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.92em; white-space: pre-wrap; }
+.latex-for-omeka .lfo-math[data-display="true"] { display: block; margin: 0.75em 0; overflow-x: auto; overflow-y: hidden; text-align: center; }
+.latex-for-omeka .lfo-table .lfo-math[data-display="true"] { margin: 0.2em 0; }
+.latex-for-omeka .lfo-math-error { outline: 1px dashed currentColor; }
+
+/* Running text */
+.latex-for-omeka .lfo-bf { font-weight: bold; }
+.latex-for-omeka .lfo-it { font-style: italic; }
+.latex-for-omeka .lfo-sc { font-variant: small-caps; }
+.latex-for-omeka .lfo-tt, .latex-for-omeka code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.92em; }
+.latex-for-omeka .lfo-sf { font-family: system-ui, sans-serif; }
+.latex-for-omeka .lfo-normal { font-weight: normal; font-style: normal; font-variant: normal; }
+.latex-for-omeka .lfo-tiny { font-size: 0.6em; }
+.latex-for-omeka .lfo-scriptsize { font-size: 0.7em; }
+.latex-for-omeka .lfo-footnotesize { font-size: 0.8em; }
+.latex-for-omeka .lfo-small { font-size: 0.9em; }
+.latex-for-omeka .lfo-normalsize { font-size: 1em; }
+.latex-for-omeka .lfo-large { font-size: 1.2em; }
+.latex-for-omeka .lfo-large2 { font-size: 1.44em; }
+.latex-for-omeka .lfo-large3 { font-size: 1.73em; }
+.latex-for-omeka .lfo-huge { font-size: 2.07em; }
+.latex-for-omeka .lfo-huge2 { font-size: 2.49em; }
+.latex-for-omeka u.lfo-double { text-decoration-style: double; }
+.latex-for-omeka .lfo-box { border: 1px solid currentColor; padding: 0 0.25em; }
+.latex-for-omeka .lfo-stack { display: inline-block; vertical-align: middle; }
+.latex-for-omeka .lfo-footnote { font-size: 0.9em; }
+.latex-for-omeka .lfo-footnote::before { content: " ["; }
+.latex-for-omeka .lfo-footnote::after { content: "]"; }
+.latex-for-omeka .lfo-unknown { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9em; opacity: 0.75; }
+
+/* Blocks */
+.latex-for-omeka .lfo-center { text-align: center; }
+.latex-for-omeka .lfo-center .lfo-table { margin-inline: auto; }
+.latex-for-omeka .lfo-center .lfo-table td, .latex-for-omeka .lfo-center .lfo-table th { text-align: left; }
+.latex-for-omeka .lfo-center .lfo-table .lfo-c { text-align: center; }
+.latex-for-omeka .lfo-center .lfo-table .lfo-r { text-align: right; }
+.latex-for-omeka .lfo-left { text-align: left; }
+.latex-for-omeka .lfo-right { text-align: right; }
+.latex-for-omeka .lfo-float { margin: 1em 0; }
+.latex-for-omeka .lfo-float figcaption { font-size: 0.92em; margin: 0.4em 0; }
+.latex-for-omeka .lfo-quote { margin: 0.6em 1.5em; }
+.latex-for-omeka .lfo-columns { column-count: 2; column-gap: 2em; }
+.latex-for-omeka .lfo-list { margin: 0.5em 0; padding-left: 1.6em; }
+.latex-for-omeka .lfo-list li.lfo-custom { list-style: none; }
+.latex-for-omeka .lfo-list li > p,
+.latex-for-omeka .lfo-description dd > p { margin: 0 0 0.25em; }
+.latex-for-omeka .lfo-list .lfo-list { margin: 0.15em 0; }
+.latex-for-omeka .lfo-item-label { margin-left: -1.2em; }
+.latex-for-omeka .lfo-description dt { font-weight: bold; }
+.latex-for-omeka .lfo-description dd { margin: 0 0 0.4em 1.5em; }
+.latex-for-omeka .lfo-verbatim,
+.latex-for-omeka .lfo-raw {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  margin: 0.6em 0;
+  overflow-x: auto;
+}
+.latex-for-omeka .lfo-verbatim { white-space: pre; }
+.latex-for-omeka .lfo-raw { white-space: pre-wrap; padding: 0.4em 0.6em; border-left: 3px solid rgba(160, 70, 40, 0.55); }
