@@ -347,6 +347,98 @@ test('text the server already decoded is not decoded a second time', () => {
   assert.match(html('\\[ \\text{&lt;} \\]', { entitiesDecoded: true }), /data-display="true">\\text\{&amp;lt;\}<\/div>/);
 });
 
+// --- characters a transcription means literally, inside a table
+
+const withJones = rows => html(`\\begin{tabular}{lr}\n${rows}\nJones & 2.00 \\\\\n\\end{tabular}`);
+
+test('a company ampersand in a ledger row stays in its cell', () => {
+  assert.match(withJones('Edison & Co. & 4.50 \\\\'), /<td class="lfo-l">Edison &amp; Co\.<\/td><td class="lfo-r">4\.50<\/td>/);
+});
+
+test('an ampersand glued to a word stays in its cell', () => {
+  assert.match(withJones('Smith &co. & 4.50 \\\\'), /<td class="lfo-l">Smith &amp;co\.<\/td>/);
+});
+
+test('an et cetera ampersand stays in its cell', () => {
+  assert.match(withJones('nails, screws, &c. & 1.10 \\\\'), /<td class="lfo-l">nails, screws, &amp;c\.<\/td>/);
+});
+
+test('a company ampersand imported by Scripto as &amp; stays in its cell', () => {
+  assert.match(withJones('Drexel, Morgan &amp; Co. & 9.00 \\\\'), /<td class="lfo-l">Drexel, Morgan &amp; Co\.<\/td>/);
+});
+
+test('an unusual ampersand in one row joins the leftmost cell when the other rows fit', () => {
+  assert.match(withJones('Bergmann & Hammer & 3.00 \\\\'), /<td class="lfo-l">Bergmann &amp; Hammer<\/td>/);
+});
+
+test('a table whose column spec is too short still shows every cell', () => {
+  assert.equal((html('\\begin{tabular}{l} a & b \\\\ c & d \\\\ \\end{tabular}').match(/<td/g) || []).length, 4);
+});
+
+test('ampersands without spaces still separate cells when the row fits', () => {
+  assert.match(html('\\begin{tabular}{ll} a&b \\\\ \\end{tabular}'), /<td class="lfo-l">a<\/td><td class="lfo-l">b<\/td>/);
+});
+
+test('compact rows preserve embedded company initials before repairing separators', () => {
+  const t = String.raw`\begin{tabular}{lll}Item&AT&T&10\\Other & Company & 20\\\end{tabular}`;
+  assert.match(html(t), /<td class="lfo-l">Item<\/td><td class="lfo-l">AT&amp;T<\/td><td class="lfo-l">10<\/td>/);
+});
+
+test('compact rows preserve R&D without joining the preceding cell', () => {
+  const t = String.raw`\begin{tabular}{lll}Department&R&D&10\\\end{tabular}`;
+  assert.match(html(t), /<td class="lfo-l">Department<\/td><td class="lfo-l">R&amp;D<\/td><td class="lfo-l">10<\/td>/);
+});
+
+test('numeric-percent comments cannot close math environments early', () => {
+  const t = String.raw`\begin{align}x=1% ignored \end{align}
++y=2
+\end{align}`;
+  const result = html(t);
+  assert.match(result, /\+y=2\n\\end\{align\*\}<\/div>$/);
+  assert.doesNotMatch(result, /<br/);
+});
+
+test('numeric-percent comments cannot open nested starred math environments', () => {
+  const t = String.raw`\begin{align*}x=1% ignored \begin{align*}
++y=2
+\end{align*}`;
+  assert.equal(render(t).found, true);
+  assert.match(html(t), /data-display="true">\\begin\{align\*\}x=1% ignored/);
+  assert.match(html(t), /\+y=2\n\\end\{align\*\}<\/div>$/);
+});
+
+test('a percentage in a table cell is kept', () => {
+  assert.match(withJones('Interest at 6% & 12.00 \\\\'), /<td class="lfo-l">Interest at 6%<\/td><td class="lfo-r">12\.00<\/td>/);
+});
+
+test('a percentage written with a space is kept', () => {
+  assert.match(withJones('Interest at 6 % & 12.00 \\\\'), /<td class="lfo-l">Interest at 6 %<\/td>/);
+});
+
+test('a percentage does not hide an environment ending on the same line', () => {
+  assert.match(html('\\begin{tabular}{l} 6% \\\\ \\end{tabular}'), /<td class="lfo-l">6%<\/td>/);
+});
+
+test('a percentage in running text inside a block keeps the rest of the line', () => {
+  assert.match(html('\\begin{center}rate 6% for the year\\end{center}'), /<p>rate 6% for the year<\/p>/);
+});
+
+test('two dollar amounts in one cell stay as money', () => {
+  assert.match(withJones('from $5 to $10 & 3 \\\\'), /<td class="lfo-l">from \$5 to \$10<\/td>/);
+});
+
+test('dollar math in a cell is still typeset', () => {
+  assert.match(withJones('$x^2$ & 3 \\\\'), /<td class="lfo-l"><span class="lfo-math" data-display="false">x\^2<\/span><\/td>/);
+});
+
+test('a stray opening brace stays in its own cell', () => {
+  assert.match(withJones('open { brace & 1 \\\\'), /<td class="lfo-l">open \{ brace<\/td><td class="lfo-r">1<\/td>/);
+});
+
+test('a stray closing brace is shown', () => {
+  assert.match(withJones('close } brace & 1 \\\\'), /<td class="lfo-l">close \} brace<\/td>/);
+});
+
 // --- robustness
 
 test('column declarations stay separate from the cell text', () => {

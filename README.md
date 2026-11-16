@@ -126,6 +126,14 @@ Everything else in the value is shown as before.
   - `%` starts a comment;
   - `&` separates table cells;
   - write `\$`, `\%` and `\&` for the characters themselves.
+- **Inside a block, what a transcriber types by habit is still read as meant:**
+  - `6%` and `6 %` are percentages. Only a `%` that does not follow a number starts a comment. In math,
+    which KaTeX reads as TeX, every `%` starts a comment, so write `\%` there.
+  - `$` is math only by Pandoc's rules, so "from $5 to $10" stays money.
+  - In a row with more cells than the table has columns, `&` glued to a word (`&co`, `&c.`, `AT&T`) and
+    the `&` of "& Co.", "& Sons" or "& Bros." stay in their cell. If the other rows fit the columns, any
+    remaining extra `&` joins the leftmost cells, where names usually are.
+  - A `{` or `}` without a partner is shown as typed instead of swallowing the rest of the table.
 - **Equation numbers are dropped,** since a transcription has none of its own. Use `\tag{…}` to show the
   number written on the page.
 - **What the module cannot draw is shown as written.** An unknown command appears in monospace, and an

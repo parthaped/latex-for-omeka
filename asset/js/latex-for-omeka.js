@@ -100,6 +100,14 @@
     return this.s.slice(start);
   };
 
+  // A transcribed "6%" or "6 %" is a percent sign; any other % starts a LaTeX comment.
+  function commentAt(s, i) {
+    if (s[i] !== '%') return false;
+    var j = i - 1;
+    while (j >= 0 && (s[j] === ' ' || s[j] === '\t')) j--;
+    return j < 0 || !/[0-9½¼¾⅓⅔⅛⅜⅝⅞]/.test(s[j]);
+  }
+
   // LaTeX comments run to the end of the line and swallow the next line's indent.
   function stripComments(s) {
     var out = '';
@@ -113,7 +121,7 @@
         continue;
       }
       if (c === '\\') { out += s.slice(i, i + 2); i += 2; continue; }
-      if (c === '%') {
+      if (commentAt(s, i)) {
         while (i < s.length && s[i] !== '\n') i++;
         i++;
         while (i < s.length && (s[i] === ' ' || s[i] === '\t')) i++;
@@ -123,6 +131,33 @@
       i++;
     }
     return out;
+  }
+
+  // A brace with no partner is a transcribed character, so it must not swallow the rest of the table.
+  function escapeStrayBraces(s) {
+    var open = [];
+    var stray = [];
+    var i = 0;
+    while (i < s.length) {
+      var literalEnd = verbatimEnd(s, i);
+      if (literalEnd !== null) { i = literalEnd; continue; }
+      var c = s[i];
+      if (c === '\\') { i += 2; continue; }
+      if (c === '{') open.push(i);
+      else if (c === '}') {
+        if (open.length) open.pop(); else stray.push(i);
+      }
+      i++;
+    }
+    stray = stray.concat(open).sort(function (a, b) { return a - b; });
+    if (!stray.length) return s;
+    var out = '';
+    var last = 0;
+    stray.forEach(function (at) {
+      out += s.slice(last, at) + '\\';
+      last = at;
+    });
+    return out + s.slice(last);
   }
 
   // Calls visit(i) at each position outside braces and nested environments; visit returns chars consumed.
@@ -183,8 +218,10 @@
     }
     var depth = 1;
     var k = bodyStart;
+    // KaTeX follows TeX comments even when prose accepts an unescaped numeric percentage.
+    var math = Object.prototype.hasOwnProperty.call(MATH_ENVS, name.replace(/\*$/, ''));
     while (k < s.length) {
-      if (s[k] === '%') {
+      if (math ? s[k] === '%' : commentAt(s, k)) {
         while (k < s.length && s[k] !== '\n') k++;
         continue;
       }
@@ -323,7 +360,7 @@
       return '<pre class="lfo-verbatim">' + esc(body.replace(/^[ \t]*\r?\n/, '').replace(/\r?\n[ \t]*$/, '')) + '</pre>';
     }
     if (MATH_ENVS[base]) return mathEnvironment(name, body);
-    body = stripComments(body);
+    body = escapeStrayBraces(stripComments(body));
     if (TABULAR[base]) return tabular(name, base, body);
     var c;
     switch (base) {
@@ -545,17 +582,63 @@
     return rows;
   }
 
-  function splitCells(row) {
-    var cells = [];
-    var last = 0;
+  // Where a row's top-level & separators are.
+  function cellBreaks(row) {
+    var at = [];
     scanTop(row, function (i) {
       if (row[i] !== '&') return 0;
+      at.push(i);
+      return 1;
+    });
+    return at;
+  }
+
+  function cellsAt(row, breaks) {
+    var cells = [];
+    var last = 0;
+    breaks.forEach(function (i) {
       cells.push(row.slice(last, i));
       last = i + 1;
-      return 1;
     });
     cells.push(row.slice(last));
     return cells;
+  }
+
+  function cellSpan(cell) {
+    var m = /^\s*\\multicolumn\s*\{\s*(\d+)\s*\}/.exec(cell);
+    return m ? Math.max(1, Math.min(parseInt(m[1], 10), 200)) : 1;
+  }
+
+  function rowWidth(row, breaks) {
+    return cellsAt(row, breaks).reduce(function (n, cell) { return n + cellSpan(cell); }, 0);
+  }
+
+  // Prefer embedded initials (AT&T, R&D) before looser matches that may be compact cell separators.
+  var LITERAL_AMPS = [
+    function (row, i) { return /(?:^|[^A-Za-z])[A-Z]{1,3}$/.test(row.slice(0, i)) && /^[A-Z]{1,3}(?![A-Za-z])/.test(row.slice(i + 1)); },
+    function (row, i) { return /[A-Za-z]/.test(row[i + 1] || ''); },
+    function (row, i) { return /^&\s*(?:co\b|c\.|sons?\b|bros?\b|brothers\b)/i.test(row.slice(i, i + 12)); },
+  ];
+
+  // A row with more cells than columns has "&" meant as text; it rejoins its cell instead of adding a column.
+  function joinLiteralAmps(row, breaks, ncols, trustColumns) {
+    var keep = breaks.slice();
+    var spans = cellsAt(row, breaks).map(cellSpan);
+    var width = spans.reduce(function (n, s) { return n + s; }, 0);
+    // A joined cell keeps its left part's span, since \multicolumn can only open a cell.
+    function join(k) {
+      width -= spans[k + 1];
+      spans.splice(k + 1, 1);
+      keep.splice(k, 1);
+    }
+    LITERAL_AMPS.forEach(function (literal) {
+      for (var k = 0; k < keep.length && width > ncols;) {
+        if (literal(row, keep[k])) join(k); else k++;
+      }
+    });
+    // Names sit left of the amounts; only done when the other rows show the column count is right.
+    while (trustColumns && keep.length && width > ncols) join(0);
+    return keep;
   }
 
   function parseSpan(s) {
@@ -763,8 +846,13 @@
     var sectionStart = 0;
     var caption = null;
     var sections = {};
+    var leads = chunks.map(leadingRules);
+    var widths = leads.filter(function (l) { return l.rest.trim(); })
+      .map(function (l) { return rowWidth(l.rest, cellBreaks(l.rest)); });
+    var fit = widths.filter(function (w) { return w <= ncols; }).length;
+    var trustColumns = fit > 0 && fit >= widths.length - fit;
     chunks.forEach(function (chunk, k) {
-      var lead = leadingRules(chunk);
+      var lead = leads[k];
       lead.rules.forEach(function (r) {
         if (!r.marker) { pending.push(r); return; }
         // A rule written before \endhead or \endfoot closes that section, under its last row.
@@ -789,7 +877,7 @@
       if (!rest.trim() && k === chunks.length - 1) return;
       var cells = [];
       var col = 0;
-      splitCells(rest).forEach(function (part) {
+      cellsAt(rest, joinLiteralAmps(rest, cellBreaks(rest), ncols, trustColumns)).forEach(function (part) {
         var cell = parseCell(part, col, spec);
         cells.push(cell);
         col += cell.colspan;
@@ -981,7 +1069,10 @@
       case '\\': return this.command();
       case '{': return this.group();
       case '$': return this.dollar();
-      case '%': this.comment(); return '';
+      case '%':
+        if (!commentAt(s, this.i)) { this.i++; return '%'; }
+        this.comment();
+        return '';
       case '~': this.i++; return ' ';
       case '-':
         if (s.startsWith('---', this.i)) { this.i += 3; return '—'; }
@@ -1032,8 +1123,11 @@
       return '$$';
     }
     var k = findClose(s, this.i + 1, '$');
-    // An unpaired dollar is a dollar sign, not the start of math that never ends.
-    if (k < 0) { this.i++; return '$'; }
+    // An unpaired dollar, or one that reads as money ("$5 to $10"), is a dollar sign: Pandoc's rules.
+    if (k < 0 || /\s/.test(s[this.i + 1] || ' ') || /\s/.test(s[k - 1]) || /\d/.test(s[k + 1] || '')) {
+      this.i++;
+      return '$';
+    }
     var t = s.slice(this.i + 1, k);
     this.i = k + 1;
     return mathHtml(t, false, false);
